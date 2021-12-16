@@ -22,10 +22,11 @@ fn main() {
         .get_matches();
     let text = matches.values_of_lossy("text").unwrap();
     let omit_nl = matches.is_present("omit_newline");
-    let mut ending = "\n";
-    if omit_nl {
-        ending = "";
-    }
+    // let mut ending = "\n";
+    // if omit_nl {
+    //     ending = "";
+    // }
+    let ending = if omit_nl {""} else {"\n"};
     print!("{}", text.join(" ") + ending);
 
 }
