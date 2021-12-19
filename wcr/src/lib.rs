@@ -1,9 +1,8 @@
-use std::borrow::Borrow;
 use clap::{App, Arg};
 use std::error::Error;
 use std::fs::File;
 use std::io;
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{BufRead, BufReader};
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
@@ -43,15 +42,15 @@ pub fn get_args() -> MyResult<Config> {
                 .short("c")
                 .long("bytes")
                 .help("print the byte counts")
-                .takes_value(false)
-                .conflicts_with("count_characters"),
+                .takes_value(false),
         )
         .arg(
             Arg::with_name("count_characters")
                 .short("m")
                 .long("chars")
                 .help("print the character counts")
-                .takes_value(false),
+                .takes_value(false)
+                .conflicts_with("count_bytes"),
         )
         .arg(
             Arg::with_name("count_lines")
@@ -120,18 +119,23 @@ pub fn run(config: Config) -> MyResult<()> {
 
 fn print_statistics(config: &Config, info: &FileInfo, filename: &str) {
     if config.lines {
-        print!(" {:2?}", info.num_lines);
+        print!("{:>8}", info.num_lines);
     }
     if config.words {
-        print!(" {:3?}", info.num_words);
+        print!("{:>8}", info.num_words);
     }
     if config.bytes {
-        print!(" {:3?}", info.num_bytes);
+        print!("{:>8}", info.num_bytes);
     }
     if config.chars {
-        print!(" {:3?}", info.num_chars);
+        print!("{:>8}", info.num_chars);
     }
-    println!(" {}", filename);
+    if filename.ne("-") {
+        println!(" {}", filename);
+    }else {
+        println!();
+    }
+    // println!("{}", if filename.ne("-") {filename}else{""});
 }
 
 fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
