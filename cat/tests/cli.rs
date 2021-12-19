@@ -25,19 +25,34 @@ fn usage() -> TestResult {
 }
 
 // --------------------------------------------------
-fn gen_bad_file() -> String {
-    loop {
-        let filename: String = rand::thread_rng()
-            .sample_iter(&Alphanumeric)
-            .take(7)
-            .map(char::from)
-            .collect();
+// fn gen_bad_file3() -> String {
+//     loop {
+//         let filename: String = rand::thread_rng()
+//             .sample_iter(&Alphanumeric)
+//             .take(7)
+//             .map(char::from)
+//             .collect();
+//
+//         if fs::metadata(&filename).is_err() {
+//             return filename;
+//         }
+//     }
+// }
 
-        if fs::metadata(&filename).is_err() {
-            return filename;
-        }
+fn gen_bad_file() -> String {
+    let filename: String = rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(7)
+        .map(char::from)
+        .collect();
+
+    if fs::metadata(&filename).is_err() {
+        filename
+    }else {
+        gen_bad_file()
     }
 }
+
 
 // --------------------------------------------------
 #[test]
