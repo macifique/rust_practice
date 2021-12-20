@@ -151,14 +151,29 @@ pub fn count(mut file: impl BufRead) -> MyResult<FileInfo> {
     let mut num_bytes = 0;
     let mut num_chars = 0;
 
-    let mut buffer = Vec::new();
-    let result_bytes = file.read_to_end(&mut buffer);
-    let char_string = String::from_utf8_lossy(&buffer).to_string();
+    // let mut buffer = Vec::new();
+    // let result_bytes = file.read_to_end(&mut buffer);
+    // let char_string = String::from_utf8_lossy(&buffer).to_string();
+    //
+    // num_bytes = result_bytes?;
+    // num_chars = char_string.len();
+    // num_lines = char_string.lines().count();
+    // num_words = char_string.split_whitespace().count();
 
-    num_bytes = result_bytes?;
-    num_chars = char_string.len();
-    num_lines = char_string.lines().count();
-    num_words = char_string.split_whitespace().count();
+    let mut line = String::new();
+
+    loop {
+        let line_bytes = file.read_line(&mut line)?;
+        if line_bytes == 0 {
+            break;
+        }
+        num_bytes += line_bytes;
+        num_lines += 1;
+        num_words += line.split_whitespace().count();
+        num_chars += line.chars().count();
+        line.clear();
+    }
+
 
     Ok(FileInfo {
         num_lines,
