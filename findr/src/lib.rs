@@ -1,8 +1,9 @@
-use crate::EntryType::*;
 use clap::{App, Arg};
 use regex::Regex;
 use std::error::Error;
+use std::path::Path;
 use std::str::FromStr;
+use walkdir::WalkDir;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
@@ -11,19 +12,8 @@ enum EntryType {
     Dir,
     File,
     Link,
-    None
 }
 
-impl EntryType {
-    fn convert(s: &String) -> EntryType {
-        match s.as_str() {
-            "d" => EntryType::Dir,
-            "f" => EntryType::File,
-            "l" => EntryType::Link,
-            _ => EntryType::None
-        }
-    }
-}
 impl FromStr for EntryType {
     type Err = ();
 
@@ -81,27 +71,86 @@ pub fn get_args() -> MyResult<Config> {
         .get_matches();
 
     let paths = matches.values_of_lossy("dirs").unwrap();
-    let types : Result<Vec<EntryType>,()> = match matches.values_of_lossy("types") {
-        Option::None => Ok(vec!()),
-        Some(t) => t.iter()
-            .map(String::as_str)
-            .map(EntryType::from_str)
-            .collect()
-    };
+    let names = matches
+        .values_of_lossy("names")
+        .map(|vals| {
+            vals.iter()
+                .map(|name| {
+                    Regex::new(&name)
+                        .map_err(|_| format!("Invalid --name \"{}\"", name))
+                })
+                .collect::<Result<Vec<_>, _>>()
+        })
+        .transpose()?
+        .unwrap_or_default();
 
-
+    let entry_types = matches
+        .values_of_lossy("types")
+        .map(|vals| {
+            vals.iter()
+                .map(|x|{
+                    EntryType::from_str(&x)
+                        .map_err(|_| format!("Invalid --type \"{}\"", x))
+                })
+                .collect::<Result<Vec<_>, _>>()
+            })
+        .transpose()?
+        .unwrap_or_default();
 
     Ok(Config {
         paths,
-        names: vec![],
-        entry_types : match types {
-            Ok(t) => t,
-            Err(_) => vec![]
-        }
+        names,
+        entry_types
     })
 }
 
 pub fn run(config: Config) -> MyResult<()> {
-    dbg!(config);
+    for path in config.paths {
+        for entry in WalkDir::new(path) {
+            match entry {
+                Err(e) => eprintln!("{}", e),
+                Ok(ex) => {
+                    let path = ex.path();
+                    if fits(&config.entry_types, path) {
+                        let filename = path.file_name().unwrap().to_str().unwrap();
+                        if matches(&config.names, filename) {
+                            println!("{}", ex.path().display())
+                        }
+                    }
+                }
+            }
+        }
+    }
     Ok(())
+}
+
+
+fn matches(reg_list: &Vec<Regex>, attr: &str) -> bool {
+    let mut ret = if reg_list.len() > 0 {
+        false
+    }else {
+        true
+    };
+    for r in reg_list {
+        if r.is_match(attr) {
+            ret = true;
+            break;
+        }
+    }
+    ret
+}
+
+fn fits(entry_list: &Vec<EntryType>, path: &Path) -> bool {
+    let mut ret = false;
+
+    if path.is_dir() && entry_list.contains(&EntryType::Dir) {
+        ret = true;
+    }else if path.is_file() && entry_list.contains(&EntryType::File) {
+        ret = true;
+    }else if !path.is_file() && !path.is_dir() && entry_list.contains(&EntryType::Link) {
+        ret = true;
+    }else if entry_list.len() == 0 {
+        ret = true
+    }
+    ret
 }
