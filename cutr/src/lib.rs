@@ -83,39 +83,24 @@ pub fn get_args() -> MyResult<Config> {
         return Ok(());
     }
 
-    //
-    // fn valid_range(v: String) -> Result<(), String> {
-    //     let set = RegexSet::new(&[
-    //         r"\d+-{1}\d+",
-    //         r"-{1}\d+",
-    //         r"\d+-{1}",
-    //         r"\d+",
-    //     ]).unwrap();
-    //     let matches = set.matches(&v);
-    //     if matches.matched_any() {
-    //         return Ok(());
-    //     }
-    //     return Err(String::from("Invalid range"));
-    // }
+    let extract : Extract;
 
 
-    // fn parse_pos(range: &str) -> MyResult<PositionList> {
-    //     let ranges = range.split(",").collect_vec();
-    //
-    //     let mut rangevec : PositionList = vec![];
-    //
-    //     for r in ranges {
-    //
-    //     }
-    //
-    //     Ok(PositionList(vec![]))
-    //
-    // }
+    if matches.is_present("fields") {
+        extract = Extract::Fields(parse_pos(matches.value_of("fields").unwrap_or_default())?);
+    }else if matches.is_present("bytes") {
+        extract = Extract::Fields(parse_pos(matches.value_of("bytes").unwrap_or_default())?);
+    }else if matches.is_present("chars") {
+        extract = Extract::Fields(parse_pos(matches.value_of("chars").unwrap_or_default())?);
+    }else {
+        extract = Extract::Fields(vec![]);
+    }
+
 
     Ok(Config {
         files: matches.values_of_lossy("files").unwrap(),
         delimiter: matches.value_of("delimiter").unwrap().as_bytes()[0],
-        extract: Extract::Chars(vec![])
+        extract
     })
 }
 
@@ -162,7 +147,6 @@ fn parse_pos(range: &str) -> MyResult<PositionList> {
     }
 
 }
-
 
 fn get_num(nstr: &str) ->MyResult<usize> {
     let n = nstr.parse::<usize>().expect(&format!("illegal list value: {}", nstr));
