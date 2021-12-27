@@ -77,8 +77,8 @@ pub fn get_args() -> MyResult<Config> {
         .get_matches();
 
     fn valid_delimiter(v: String) -> Result<(), String> {
-        if v.len() >1 {
-            return Err(String::from("the delimiter must be a single character"));
+        if v.len() !=1 {
+            return Err(String::from("the delimiter must be a single byte"));
         }
         return Ok(());
     }
@@ -99,6 +99,7 @@ pub fn get_args() -> MyResult<Config> {
 
     Ok(Config {
         files: matches.values_of_lossy("files").unwrap(),
+        // delimiter: matches.value_of("delimiter").unwrap().as_bytes()[0],
         delimiter: matches.value_of("delimiter").unwrap().as_bytes()[0],
         extract
     })
