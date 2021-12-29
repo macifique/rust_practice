@@ -6,7 +6,7 @@ fn main() {
     match io::stdin().read_line(&mut instr) {
         Ok(_n) => {
             println!("Input text: {}", instr);
-            println!("Converted text: {}", to_pig_latin(&mut instr));
+            println!("Converted text: {}", to_pig_latin(&instr));
         }
         Err(error) => println!("error: {}", error),
     }
@@ -23,11 +23,14 @@ fn to_pig_latin(val: &str) -> String {
 }
 
 fn pigize(val: &str) -> String {
-    let str_val = val.to_string();
+    let valstr = val.to_string();
+    if valstr.is_empty() {
+        return valstr;
+    }
     let mut ret = String::new();
     let mut first_consonant :Option<char> = Option::None;
     let mut first = true;
-    for letter in str_val.chars() {
+    for letter in val.to_string().chars() {
         if first {
             first = false;
             if !is_vowel(letter) {
@@ -42,7 +45,6 @@ fn pigize(val: &str) -> String {
         None => ret + "hay",
         Some(val) => ret + &val.to_string() + "ay"
     }
-
 }
 
 fn is_vowel(val: char) -> bool {
@@ -59,4 +61,20 @@ fn is_vowel(val: char) -> bool {
         'U' => true,
         _ => false
     }
+}
+
+#[test]
+fn test_pigize() {
+    assert_eq!("ello-hay", pigize("hello"));
+    assert_eq!("anana-bay", pigize("banana"));
+    assert_eq!("apple-hay", pigize("apple"));
+    assert_eq!("Apple-hay", pigize("Apple"));
+    assert_eq!("", pigize(""));
+    assert_eq!("", pigize(""));
+    // assert_eq!("Ear-pay", pigize("Pear"));
+}
+
+#[test]
+fn test_piglatin() {
+    assert_eq!("itten-kay eel-hay", to_pig_latin("kitten   eel   "));
 }
